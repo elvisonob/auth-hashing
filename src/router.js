@@ -11,13 +11,19 @@ const jwtSecret = 'mysecretkey';
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
+    //For the auth-hash, I made a variable called hashedPassword with the 'bycrypt.hash' to hash the password
+    const hashedPassword=await bcrypt.hash(password, 10)
     const createdUser = await prisma.user.create({
         data: {
-            username,
-            password
+            username: username,
+            password: hashedPassword
         }
     });
 
+//As per the instruction, I am sending a message which says 'User created' response when a user is registered
+     if (createdUser) {
+         return res.status(202).json({message:'User created'})
+     }
     res.json({ data: createdUser });
 });
 
@@ -34,7 +40,9 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
-    const passwordsMatch = password === foundUser.password;
+    //Right here, I am using 'bcrypt.compare' to compare the passwords to ensure it matches.
+
+    const passwordsMatch = await bcrypt.compare (password, foundUser.password)
 
     if (!passwordsMatch) {
         return res.status(401).json({ error: 'Invalid username or password.' });
